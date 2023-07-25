@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from semantic_version import Version
 
@@ -30,8 +30,7 @@ def get_vyper_version(with_commit_hash: bool = False) -> Version:
 
 def compile_vyper_source(
     source: str,
-    output_values: List = None,
-    import_remappings: Union[Dict, List, str] = None,
+    format_values: List = None,
     base_path: Union[Path, str] = None,
     allow_paths: Union[List, Path, str] = None,
     output_dir: Union[Path, str] = None,
@@ -40,11 +39,7 @@ def compile_vyper_source(
     revert_strings: Union[List, str] = None,
     metadata_hash: str = None,
     metadata_literal: bool = False,
-    optimize: bool = False,
-    optimize_runs: int = None,
-    optimize_yul: bool = False,
-    no_optimize_yul: bool = False,
-    yul_optimizations: int = None,
+    optimize: Union[Literal['gas'], Literal['code'], Literal['None'], None] = None,
     vyper_binary: Union[str, Path] = None,
     vyper_version: Version = None,
     allow_empty: bool = False,
@@ -62,9 +57,6 @@ def compile_vyper_source(
     output_values : List, optional
         Compiler outputs to return. Valid options depend on the version of `vyper`.
         If not given, all possible outputs for the active version are returned.
-    import_remappings : Dict | List | str , optional
-        Path remappings. May be given as a string or list of strings formatted as
-        `"prefix=path"`, or a dict of `{"prefix": "path"}`.
     base_path : Path | str, optional
         Use the given path as the root of the source tree instead of the root
         of the filesystem.
@@ -89,13 +81,6 @@ def compile_vyper_source(
         Set for how many contract runs to optimize. Lower values will optimize
         more for initial deployment cost, higher values will optimize more for
         high-frequency usage.
-    optimize_yul: bool, optional
-        Enable the yul optimizer.
-    no_optimize_yul : bool, optional
-        Disable the yul optimizer.
-    yul_optimizations : int, optional
-        Force yul optimizer to use the specified sequence of optimization steps
-        instead of the built-in one.
     vyper_binary : str | Path, optional
         Path of the `vyper` binary to use. If not given, the currently active
         version is used (as set by `ethcx.set_vyper_version`)
@@ -110,26 +95,22 @@ def compile_vyper_source(
     Dict
         Compiler output. The source file name is given as `<stdin>`.
     """
-    with open('/tmp/ethcx_vyper_source.vy', 'w') as f:
-        f.write(source)
-    return compile_vyper_files(
-        [Path('/tmp/ethcx_vyper_source.vy')],
-        vyper_binary=vyper_binary,
-        vyper_version=vyper_version,
-        output_values=output_values,
-        import_remappings=import_remappings,
-        base_path=base_path,
-        allow_paths=allow_paths,
+    standard_json_input = {
+        "language": "Vyper",
+        "sources": {"<stdin>": {"content": source}},
+        "settings": {
+            "evmVersion": evm_version,
+            "outputSelection": {"*": {"*": format_values or ["*"], "": ["ast"]}},
+        },
+    }
+    return compile_vyper_standard(
+        input_data=standard_json_input,
         output_dir=output_dir,
         overwrite=overwrite,
-        evm_version=evm_version,
-        revert_strings=revert_strings,
-        metadata_hash=metadata_hash,
-        metadata_literal=metadata_literal,
-        optimize=optimize,
-        optimize_runs=optimize_runs,
-        no_optimize_yul=no_optimize_yul,
-        yul_optimizations=yul_optimizations,
+        base_path=base_path,
+        allow_paths=allow_paths,
+        vyper_binary=vyper_binary,
+        vyper_version=vyper_version,
         allow_empty=allow_empty,
     )
 
@@ -137,20 +118,11 @@ def compile_vyper_source(
 def compile_vyper_files(
     source_files: Union[List, Path, str],
     output_values: List = None,
-    import_remappings: Union[Dict, List, str] = None,
     base_path: Union[Path, str] = None,
     allow_paths: Union[List, Path, str] = None,
     output_dir: Union[Path, str] = None,
     overwrite: bool = False,
     evm_version: str = None,
-    revert_strings: Union[List, str] = None,
-    metadata_hash: str = None,
-    metadata_literal: bool = False,
-    optimize: bool = False,
-    optimize_runs: int = None,
-    optimize_yul: bool = False,
-    no_optimize_yul: bool = False,
-    yul_optimizations: int = None,
     vyper_binary: Union[str, Path] = None,
     vyper_version: Version = None,
     allow_empty: bool = False,
@@ -182,26 +154,6 @@ def compile_vyper_files(
         Overwrite existing files (used in combination with `output_dir`)
     evm_version: str, optional
         Select the desired EVM version. Valid options depend on the `vyper` version.
-    revert_strings : List | str, optional
-        Strip revert (and require) reason strings or add additional debugging
-        information.
-    metadata_hash : str, optional
-        Choose hash method for the bytecode metadata or disable it.
-    metadata_literal : bool, optional
-        Store referenced sources as literal data in the metadata output.
-    optimize : bool, optional
-        Enable bytecode optimizer.
-    optimize_runs : int, optional
-        Set for how many contract runs to optimize. Lower values will optimize
-        more for initial deployment cost, higher values will optimize more for
-        high-frequency usage.
-    optimize_yul: bool, optional
-        Enable the yul optimizer.
-    no_optimize_yul : bool, optional
-        Disable the yul optimizer.
-    yul_optimizations : int, optional
-        Force yul optimizer to use the specified sequence of optimization steps
-        instead of the built-in one.
     vyper_binary : str | Path, optional
         Path of the `vyper` binary to use. If not given, the currently active
         version is used (as set by `ethcx.set_vyper_version`)
@@ -216,24 +168,26 @@ def compile_vyper_files(
     Dict
         Compiler output
     """
-    return _compile_combined_json(
-        vyper_binary=vyper_binary,
-        vyper_version=vyper_version,
-        source_files=source_files,
-        output_values=output_values,
-        import_remappings=import_remappings,
-        base_path=base_path,
-        allow_paths=allow_paths,
+    sources = {
+        Path(source_file).name: {"content": Path(source_file).read_text()}
+        for source_file in source_files
+    }
+    standard_input_json = {
+        "language": "Vyper",
+        "sources": sources,
+        "settings": {
+            "evmVersion": evm_version,
+            "outputSelection": {"*": {"*": output_values or ["*"], "": ["ast"]}},
+        },
+    }
+    return compile_vyper_standard(
+        input_data=standard_input_json,
         output_dir=output_dir,
         overwrite=overwrite,
-        evm_version=evm_version,
-        revert_strings=revert_strings,
-        metadata_hash=metadata_hash,
-        metadata_literal=metadata_literal,
-        optimize=optimize,
-        optimize_runs=optimize_runs,
-        no_optimize_yul=no_optimize_yul,
-        yul_optimizations=yul_optimizations,
+        base_path=base_path,
+        allow_paths=allow_paths,
+        vyper_binary=vyper_binary,
+        vyper_version=vyper_version,
         allow_empty=allow_empty,
     )
 
@@ -267,15 +221,14 @@ def _get_all_output_values(vyper_binary: Union[Path, str] = None) -> str:
 
 JSON_OUTPUT_FORMATS = {'combined_json', 'abi', 'method_identifiers', 'userdoc', 'devdoc', 'layout', 'ast', 'ir_json'}
 def _parse_compiler_output(input_file_names: List[str], format: str, stdoutdata: str) -> Dict:
-
     format_items = format.split(',')
     lines_out = stdoutdata.strip('\n').split('\n')
     assert len(lines_out) == len(input_file_names) * len(format_items), f"Number of lines in output ({len(lines_out)}) does not match number of format items ({len(format_items)})"
     
     contracts = {}
-    for contract_idx, contract_file_name in enumerate(input_file_names):
+    for contract_file_name in input_file_names:
         contract_output = {}
-        for idx, item in enumerate(format_items):
+        for item in enumerate(format_items):
             if item in JSON_OUTPUT_FORMATS:
                 contract_output[item] = json.loads(lines_out[format_items.index(item)])
             else:
@@ -283,14 +236,6 @@ def _parse_compiler_output(input_file_names: List[str], format: str, stdoutdata:
         
         key = contract_file_name + ':' + contract_file_name.split(os.sep)[-1].rsplit('.vy', 1)[0]
         contracts[key] = contract_output
-
-    # for path_str, data in contracts.items():
-    #     if "abi" in data and isinstance(data["abi"], str):
-    #         data["abi"] = json.loads(data["abi"])
-    #     # filename = path_str.rsplit(os.sep, maxsplit=1)[1]
-
-    # return {c + ':' + c.split(os.sep)[-1].rsplit('.vy', 1)[0]: d for c, d in contracts.items()}
-    import ipdb; ipdb.set_trace()
     return contracts
 
 
@@ -443,42 +388,3 @@ def compile_vyper_standard(
                 error_dict=compiler_output["errors"],
             )
     return compiler_output
-
-
-def link_code(
-    unlinked_bytecode: str,
-    libraries: Dict,
-    vyper_binary: Union[str, Path] = None,
-    vyper_version: Version = None,
-) -> str:
-    """
-    Add library addresses into unlinked bytecode.
-
-    Arguments
-    ---------
-    unlinked_bytecode : str
-        Compiled bytecode containing one or more library placeholders.
-    libraries : Dict
-        Library addresses given as {"library name": "address"}
-    vyper_binary : str | Path, optional
-        Path of the `vyper` binary to use. If not given, the currently active
-        version is used (as set by `ethcx.set_vyper_version`)
-    vyper_version: Version, optional
-        `vyper` version to use. If not given, the currently active version is used.
-        Ignored if `vyper_binary` is also given.
-
-    Returns
-    -------
-    str
-        Linked bytecode
-    """
-    if vyper_binary is None:
-        vyper_binary = get_executable(vyper_version)
-
-    library_list = [f"{name}:{address}" for name, address in libraries.items()]
-
-    stdoutdata = wrapper.vyper_wrapper(
-        vyper_binary=vyper_binary, stdin=unlinked_bytecode, link=True, libraries=library_list
-    )[0]
-
-    return stdoutdata.replace("Linking completed.", "").strip()
