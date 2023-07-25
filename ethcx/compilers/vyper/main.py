@@ -239,70 +239,70 @@ def _parse_compiler_output(input_file_names: List[str], format: str, stdoutdata:
     return contracts
 
 
-def _compile_combined_json(
-    source_files : Union[List, Path, str],
-    output_values: Optional[List] = None,
-    vyper_binary: Union[str, Path, None] = None,
-    vyper_version: Optional[Version] = None,
-    output_dir: Union[str, Path, None] = None,
-    overwrite: Optional[bool] = False,
-    allow_empty: Optional[bool] = False,
-    **kwargs: Any,
-) -> Dict:
-    assert 'stdin' not in kwargs or kwargs.get('stdin', None) is None, '`stdin` is not supported by vyper'
-    assert source_files
+# def _compile_combined_json(
+#     source_files : Union[List, Path, str],
+#     output_values: Optional[List] = None,
+#     vyper_binary: Union[str, Path, None] = None,
+#     vyper_version: Optional[Version] = None,
+#     output_dir: Union[str, Path, None] = None,
+#     overwrite: Optional[bool] = False,
+#     allow_empty: Optional[bool] = False,
+#     **kwargs: Any,
+# ) -> Dict:
+#     assert 'stdin' not in kwargs or kwargs.get('stdin', None) is None, '`stdin` is not supported by vyper'
+#     assert source_files
 
-    if vyper_binary is None:
-        vyper_binary = get_executable(vyper_version)
+#     if vyper_binary is None:
+#         vyper_binary = get_executable(vyper_version)
 
-    if output_values is None:
-        output_format = _get_all_output_values(vyper_binary)
-        output_values = output_format.split(',')
-    else:
-        output_format = ",".join(output_values)
+#     if output_values is None:
+#         output_format = _get_all_output_values(vyper_binary)
+#         output_values = output_format.split(',')
+#     else:
+#         output_format = ",".join(output_values)
 
-    assert 'combined_json' not in output_format or output_format == 'combined_json', f"combined_json must be the only output format option, got {output_format}"
-    assert not any([o in output_format.split(',') for o in DISALLOWED_FORMAT_OPTIONS]), f"Output format {output_format} contains disallowed options {DISALLOWED_FORMAT_OPTIONS}"
+#     assert 'combined_json' not in output_format or output_format == 'combined_json', f"combined_json must be the only output format option, got {output_format}"
+#     assert not any([o in output_format.split(',') for o in DISALLOWED_FORMAT_OPTIONS]), f"Output format {output_format} contains disallowed options {DISALLOWED_FORMAT_OPTIONS}"
 
-    if output_dir:
-        output_dir = Path(output_dir)
-        if output_dir.is_file():
-            raise FileExistsError("`output_dir` must be as a directory, not a file")
-        if output_dir.joinpath("combined.json").exists() and not overwrite:
-            target_path = output_dir.joinpath("combined.json")
-            raise FileExistsError(
-                f"Target output file {target_path} already exists - use overwrite=True to overwrite"
-            )
+#     if output_dir:
+#         output_dir = Path(output_dir)
+#         if output_dir.is_file():
+#             raise FileExistsError("`output_dir` must be as a directory, not a file")
+#         if output_dir.joinpath("combined.json").exists() and not overwrite:
+#             target_path = output_dir.joinpath("combined.json")
+#             raise FileExistsError(
+#                 f"Target output file {target_path} already exists - use overwrite=True to overwrite"
+#             )
 
-    stdoutdata, stderrdata, command, proc = wrapper.vyper_wrapper(
-        source_files = source_files,
-        vyper_binary=vyper_binary,
-        output_format=output_format,
-        output_dir=output_dir,
-        overwrite=overwrite,
-        **kwargs,
-    )
+#     stdoutdata, stderrdata, command, proc = wrapper.vyper_wrapper(
+#         source_files = source_files,
+#         vyper_binary=vyper_binary,
+#         output_format=output_format,
+#         output_dir=output_dir,
+#         overwrite=overwrite,
+#         **kwargs,
+#     )
 
-    if output_dir:
-        output_path = Path(output_dir).joinpath("combined.json")
-        if stdoutdata:
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-            with output_path.open("w") as fp:
-                fp.write(stdoutdata)
-        else:
-            with output_path.open() as fp:
-                stdoutdata = fp.read()
+#     if output_dir:
+#         output_path = Path(output_dir).joinpath("combined.json")
+#         if stdoutdata:
+#             output_path.parent.mkdir(parents=True, exist_ok=True)
+#             with output_path.open("w") as fp:
+#                 fp.write(stdoutdata)
+#         else:
+#             with output_path.open() as fp:
+#                 stdoutdata = fp.read()
 
-    contracts = _parse_compiler_output(source_files, output_format, stdoutdata)
+#     contracts = _parse_compiler_output(source_files, output_format, stdoutdata)
 
-    if not contracts and not allow_empty:
-        raise ContractsNotFound(
-            command=command,
-            return_code=proc.returncode,
-            stdout_data=stdoutdata,
-            stderr_data=stderrdata,
-        )
-    return contracts
+#     if not contracts and not allow_empty:
+#         raise ContractsNotFound(
+#             command=command,
+#             return_code=proc.returncode,
+#             stdout_data=stdoutdata,
+#             stderr_data=stderrdata,
+#         )
+#     return contracts
 
 
 def compile_vyper_standard(
@@ -370,6 +370,8 @@ def compile_vyper_standard(
     compiler_output = json.loads(stdoutdata)
     if "errors" in compiler_output:
         has_errors = any(error["severity"] == "error" for error in compiler_output["errors"])
+        for error in compiler_output["errors"]:
+            wrapper.install.LOGGER.warn(f"{error['severity'].upper()} @ {error['sourceLocation']}: {error['message']}")
         if has_errors:
             error_message = "\n".join(
                 tuple(
