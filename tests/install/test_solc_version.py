@@ -5,12 +5,12 @@ import functools
 import pytest
 from semantic_version import Version
 
-import solcx
-from solcx.exceptions import SolcNotInstalled, UnsupportedVersionError
+import ethcx
+from ethcx.exceptions import CompilerNotInstalled, UnsupportedVersionError
 
 
 def test_set_solc_version_pragma(pragmapatch):
-    set_pragma = functools.partial(solcx.set_solc_version_pragma, check_new=True)
+    set_pragma = functools.partial(ethcx.set_solc_version_pragma, check_new=True)
     assert set_pragma("pragma solidity 0.4.11;") == Version("0.4.11")
     assert set_pragma("pragma solidity ^0.4.11;") == Version("0.4.25")
     assert set_pragma("pragma solidity >=0.4.0<0.4.25;") == Version("0.4.11")
@@ -18,12 +18,12 @@ def test_set_solc_version_pragma(pragmapatch):
     assert set_pragma("pragma solidity >=0.4.2<0.5.5;") == Version("0.5.4")
     assert set_pragma("pragma solidity ^0.4.2 || 0.5.5;") == Version("0.4.25")
     assert set_pragma("pragma solidity ^0.4.2 || >=0.5.4<0.7.0;") == Version("0.5.7")
-    with pytest.raises(SolcNotInstalled):
+    with pytest.raises(CompilerNotInstalled):
         set_pragma("pragma solidity ^0.7.1;")
 
 
 def test_install_solc_version_pragma(pragmapatch):
-    install_pragma = functools.partial(solcx.install_solc_pragma, install=False)
+    install_pragma = functools.partial(ethcx.install_solc_pragma, install=False)
     assert install_pragma("pragma solidity ^0.4.11;") == Version("0.4.26")
     assert install_pragma("pragma solidity >=0.4.0<0.4.25;") == Version("0.4.24")
     assert install_pragma("pragma solidity >=0.4.2;") == Version("0.6.0")
@@ -35,8 +35,8 @@ def test_install_solc_version_pragma(pragmapatch):
 
 
 def test_get_solc_version():
-    version = solcx.get_solc_version()
-    version_with_hash = solcx.get_solc_version(with_commit_hash=True)
+    version = ethcx.get_solc_version()
+    version_with_hash = ethcx.get_solc_version(with_commit_hash=True)
 
     assert version != version_with_hash
     assert version == version_with_hash.truncate()

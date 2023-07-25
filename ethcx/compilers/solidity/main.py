@@ -4,9 +4,9 @@ from typing import Any, Dict, List, Optional, Union
 
 from semantic_version import Version
 
-from solcx import wrapper
-from solcx.exceptions import ContractsNotFound, SolcError
-from solcx.install import get_executable
+from . import wrapper
+from .install import get_executable
+from ...exceptions import ContractsNotFound, CompilationError
 
 
 def get_solc_version(with_commit_hash: bool = False) -> Version:
@@ -27,7 +27,7 @@ def get_solc_version(with_commit_hash: bool = False) -> Version:
     return wrapper._get_solc_version(solc_binary, with_commit_hash)
 
 
-def compile_source(
+def compile_solidity_source(
     source: str,
     output_values: List = None,
     import_remappings: Union[Dict, List, str] = None,
@@ -131,7 +131,7 @@ def compile_source(
     )
 
 
-def compile_files(
+def compile_solidity_files(
     source_files: Union[List, Path, str],
     output_values: List = None,
     import_remappings: Union[Dict, List, str] = None,
@@ -318,7 +318,7 @@ def _compile_combined_json(
     return contracts
 
 
-def compile_standard(
+def compile_solidity_standard(
     input_data: Dict,
     base_path: str = None,
     allow_paths: List = None,
@@ -391,7 +391,7 @@ def compile_standard(
                     if error["severity"] == "error"
                 )
             )
-            raise SolcError(
+            raise CompilationError(
                 error_message,
                 command=command,
                 return_code=proc.returncode,
@@ -403,7 +403,7 @@ def compile_standard(
     return compiler_output
 
 
-def link_code(
+def link_solidity_code(
     unlinked_bytecode: str,
     libraries: Dict,
     solc_binary: Union[str, Path] = None,

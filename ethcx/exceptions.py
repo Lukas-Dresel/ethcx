@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 
-class SolcError(Exception):
+class CompilationError(Exception):
     message = "An error occurred during execution"
 
     def __init__(
@@ -35,11 +35,11 @@ class SolcError(Exception):
         ).strip()
 
 
-class ContractsNotFound(SolcError):
+class ContractsNotFound(CompilationError):
     message = "No contracts found during compilation"
 
 
-class SolcInstallationError(Exception):
+class CompilerInstallationError(Exception):
     pass
 
 
@@ -59,7 +59,7 @@ class UnsupportedVersionError(ValueError):
     pass
 
 
-class SolcNotInstalled(Exception):
+class CompilerNotInstalled(Exception):
     pass
 
 

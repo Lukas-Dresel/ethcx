@@ -1,15 +1,15 @@
 .. _using-the-compiler:
 
-==================
-Using the Compiler
-==================
+===================
+Using the Compilers
+===================
 
-py-solc-x provides several functions that you can use to interact with the ``solc`` compiler.
+ethcx provides several functions that you can use to interact with the ``solc`` and ``vyper`` compilers.
 
 Compiling a Source String
 =========================
 
-.. py:function:: solcx.compile_source(source, **kwargs)
+.. py:function:: ethcx.compile_solidity_source(source, **kwargs)
 
     Compile a Solidity contract.
 
@@ -19,8 +19,8 @@ Compiling a Source String
 
     .. code-block:: python
 
-        >>> import solcx
-        >>> solcx.compile_source(
+        >>> import ethcx
+        >>> ethcx.compile_solidity_source(
         ...     "contract Foo { function bar() public { return; } }",
         ...     output_values=["abi", "bin-runtime"],
         ...     solc_version="0.7.0"
@@ -37,10 +37,10 @@ Compiling a Source String
         ``source`` str
             Solidity contract to be compiled.
 
-    **Optional py-solc-x Arguments**
+    **Optional ethcx Arguments**
 
         ``solc_binary`` str | Path
-            Path of the ``solc`` binary to use. May be given as a string or :py:class:`Path <pathlib.PurePath>` object. If not given, the currently active version is used (as set by :func:`solcx.set_solc_version <solcx.set_solc_version>`)
+            Path of the ``solc`` binary to use. May be given as a string or :py:class:`Path <pathlib.PurePath>` object. If not given, the currently active version is used (as set by :func:`ethcx.set_solc_version <ethcx.set_solc_version>`)
         ``solc_version`` str | Version
             ``solc`` version to use. May be given as a string or :py:class:`Version <semantic_version.Version>` object. If not given, the currently active version is used. Ignored if ``solc_binary`` is also given.
         ``allow_empty`` bool
@@ -91,7 +91,7 @@ Compiling a Source String
 Compiling Files
 ===============
 
-.. py:function:: solcx.compile_files(source, **kwargs)
+.. py:function:: ethcx.compile_solidity_files(source, **kwargs)
 
     Compile one or more Solidity source files.
 
@@ -101,8 +101,8 @@ Compiling Files
 
     .. code-block:: python
 
-        >>> import solcx
-        >>> solcx.compile_files(
+        >>> import ethcx
+        >>> ethcx.compile_solidity_files(
         ...     ["Foo.sol"],
         ...     output_values=["abi", "bin-runtime"],
         ...     solc_version="0.7.0"
@@ -119,10 +119,10 @@ Compiling Files
         ``source_files`` List | Path | str
             Solidity source file, or list of source files, to be compiled. Files may be given as strings or :py:class:`Path <pathlib.PurePath>` objects.
 
-    **Optional py-solc-x Arguments**
+    **Optional ethcx Arguments**
 
         ``solc_binary`` str | Path
-            Path of the ``solc`` binary to use. May be given as a string or :py:class:`Path <pathlib.PurePath>` object. If not given, the currently active version is used (as set by :func:`solcx.set_solc_version <solcx.set_solc_version>`)
+            Path of the ``solc`` binary to use. May be given as a string or :py:class:`Path <pathlib.PurePath>` object. If not given, the currently active version is used (as set by :func:`ethcx.set_solc_version <ethcx.set_solc_version>`)
         ``solc_version`` str | Version
             ``solc`` version to use. May be given as a string or :py:class:`Version <semantic_version.Version>` object. If not given, the currently active version is used. Ignored if ``solc_binary`` is also given.
         ``allow_empty`` bool
@@ -173,7 +173,7 @@ Compiling Files
 Compiling with the Standard JSON Format
 =======================================
 
-.. py:function:: solcx.compile_standard(input_data, **kwargs)
+.. py:function:: ethcx.compile_solidity_standard(input_data, **kwargs)
 
     Compile Solidity contracts using the JSON-input-output interface.
 
@@ -187,7 +187,7 @@ Compiling with the Standard JSON Format
     **Optional py-solc-x Arguments**
 
         ``solc_binary`` str | Path
-            Path of the ``solc`` binary to use. May be given as a string or :py:class:`Path <pathlib.PurePath>` object. If not given, the currently active version is used (as set by :func:`solcx.set_solc_version <solcx.set_solc_version>`)
+            Path of the ``solc`` binary to use. May be given as a string or :py:class:`Path <pathlib.PurePath>` object. If not given, the currently active version is used (as set by :func:`ethcx.set_solc_version <ethcx.set_solc_version>`)
         ``solc_version`` str | Version
             ``solc`` version to use. May be given as a string or :py:class:`Version <semantic_version.Version>` object. If not given, the currently active version is used. Ignored if ``solc_binary`` is also given.
         ``allow_empty`` bool
@@ -210,7 +210,7 @@ Compiling with the Standard JSON Format
 Linking Libraries
 =================
 
-.. py:function:: solcx.link_code(unlinked_bytecode, libraries, solc_binary=None, solc_version=None)
+.. py:function:: ethcx.link_solidity_code(unlinked_bytecode, libraries, solc_binary=None, solc_version=None)
 
     Add library addresses into unlinked bytecode.
 
@@ -220,10 +220,10 @@ Linking Libraries
 
     .. code-block:: python
 
-        >>> import solcx
+        >>> import ethcx
         >>> unlinked_bytecode = "606060405260768060106000396000f3606060405260e060020a6000350463e7f09e058114601a575b005b60187f0c55699c00000000000000000000000000000000000000000000000000000000606090815273__TestA_________________________________90630c55699c906064906000906004818660325a03f41560025750505056"
 
-        >>> solcx.link_code(
+        >>> ethcx.link_solidity_code(
         ...     unlinked_bytecode,
         ...     {'TestA': "0xd3cda913deb6f67967b99d67acdfa1712c293601"}
         ... )
@@ -240,6 +240,6 @@ Linking Libraries
     **Optional py-solc-x Arguments**
 
         ``solc_binary`` str | Path
-            Path of the ``solc`` binary to use. May be given as a string or :py:class:`Path <pathlib.PurePath>` object. If not given, the currently active version is used (as set by :func:`solcx.set_solc_version <solcx.set_solc_version>`)
+            Path of the ``solc`` binary to use. May be given as a string or :py:class:`Path <pathlib.PurePath>` object. If not given, the currently active version is used (as set by :func:`ethcx.set_solc_version <ethcx.set_solc_version>`)
         ``solc_version`` str | Version
             ``solc`` version to use. May be given as a string or :py:class:`Version <semantic_version.Version>` object. If not given, the currently active version is used. Ignored if ``solc_binary`` is also given.

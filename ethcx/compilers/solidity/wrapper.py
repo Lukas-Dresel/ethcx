@@ -5,8 +5,8 @@ from typing import Any, Dict, List, Tuple, Union
 
 from semantic_version import Version
 
-from solcx import install
-from solcx.exceptions import SolcError, UnknownOption, UnknownValue
+from . import install
+from ...exceptions import CompilationError, UnknownOption, UnknownValue
 
 # (major.minor.patch)(nightly)(commit)
 VERSION_REGEX = r"(\d+\.\d+\.\d+)(?:-nightly.\d+.\d+.\d+|)(\+commit.\w+)"
@@ -19,7 +19,7 @@ def _get_solc_version(solc_binary: Union[Path, str], with_commit_hash: bool = Fa
         match = next(re.finditer(VERSION_REGEX, stdout_data))
         version_str = "".join(match.groups())
     except StopIteration:
-        raise SolcError("Could not determine the solc binary version")
+        raise CompilationError("Could not determine the solc binary version")
 
     version = Version.coerce(version_str)
     if with_commit_hash:
@@ -155,7 +155,7 @@ def solc_wrapper(
                 f"solc {solc_version} does not accept '{option}' as an option for the '{flag}' flag"
             )
 
-        raise SolcError(
+        raise CompilationError(
             command=command,
             return_code=proc.returncode,
             stdin_data=stdin,

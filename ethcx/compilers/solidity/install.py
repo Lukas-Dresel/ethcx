@@ -21,16 +21,17 @@ from typing import Dict, List, Optional, Union
 import requests
 from semantic_version import SimpleSpec, Version
 
-from solcx import wrapper
-from solcx.exceptions import (
+from . import wrapper
+from ethcx.exceptions import (
     DownloadError,
-    SolcInstallationError,
-    SolcNotInstalled,
+    CompilerInstallationError,
+    CompilerNotInstalled,
     UnexpectedVersionError,
     UnexpectedVersionWarning,
     UnsupportedVersionError,
 )
-from solcx.utils.lock import get_process_lock
+from ethcx.lock import get_process_lock
+from ... import ETHCX_BINARY_PATH_VARIABLE 
 
 try:
     from tqdm import tqdm
@@ -43,9 +44,7 @@ SOURCE_DOWNLOAD_BASE = "https://github.com/ethereum/solidity/releases/download/v
 GITHUB_RELEASES = "https://api.github.com/repos/ethereum/solidity/releases?per_page=100"
 
 MINIMAL_SOLC_VERSION = Version("0.4.11")
-LOGGER = logging.getLogger("solcx")
-
-SOLCX_BINARY_PATH_VARIABLE = "SOLCX_BINARY_PATH"
+LOGGER = logging.getLogger("ethcx.solidity.install")
 
 _default_solc_binary = None
 
@@ -57,10 +56,10 @@ def _get_os_name() -> str:
         return "macosx"
     if sys.platform == "win32":
         return "windows"
-    raise OSError(f"Unsupported OS: '{sys.platform}' - py-solc-x supports Linux, OSX and Windows")
+    raise OSError(f"Unsupported OS: '{sys.platform}' - ethcx supports Linux, OSX and Windows")
 
 
-def _convert_and_validate_version(version: Union[str, Version]) -> Version:
+def _convert_and_validate_solc_version(version: Union[str, Version]) -> Version:
     # take a user-supplied version as a string or Version
     # validate the value, and return a Version object
     if not isinstance(version, Version):
@@ -76,11 +75,11 @@ def _unlink_solc(solc_path: Path) -> None:
         shutil.rmtree(solc_path.parent)
 
 
-def get_solcx_install_folder(solcx_binary_path: Union[Path, str] = None) -> Path:
+def get_solc_install_folder(solcx_binary_path: Union[Path, str] = None) -> Path:
     """
-    Return the directory where `py-solc-x` stores installed `solc` binaries.
+    Return the directory where `ethcx` stores installed `solc` binaries.
 
-    By default, this is `~/.solcx`
+    By default, this is `~/.ethcx/solidity/`
 
     Arguments
     ---------
@@ -92,14 +91,16 @@ def get_solcx_install_folder(solcx_binary_path: Union[Path, str] = None) -> Path
     Path
         Subdirectory where `solc` binaries are are saved.
     """
-    if os.getenv(SOLCX_BINARY_PATH_VARIABLE):
-        return Path(os.environ[SOLCX_BINARY_PATH_VARIABLE])
+    if os.getenv(ETHCX_BINARY_PATH_VARIABLE):
+        path = Path(os.environ[ETHCX_BINARY_PATH_VARIABLE])
     elif solcx_binary_path is not None:
-        return Path(solcx_binary_path)
+        path = Path(solcx_binary_path)
     else:
-        path = Path.home().joinpath(".solcx")
-        path.mkdir(exist_ok=True)
-        return path
+        path = Path.home().joinpath(".ethcx")
+    
+    path = path.joinpath("solc")
+    path.mkdir(exist_ok=True, parents=True)
+    return path
 
 
 def _get_which_solc() -> Path:
@@ -143,7 +144,7 @@ def import_installed_solc(solcx_binary_path: Union[Path, str] = None) -> List[Ve
         except Exception:
             continue
 
-        copy_path = get_solcx_install_folder(solcx_binary_path).joinpath(f"solc-v{version}")
+        copy_path = get_solc_install_folder(solcx_binary_path).joinpath(f"solc-v{version}")
         if _get_os_name() == "windows":
             copy_path.mkdir()
             copy_path = copy_path.joinpath("solc.exe")
@@ -180,18 +181,18 @@ def get_executable(
     """
     if not version:
         if not _default_solc_binary:
-            raise SolcNotInstalled(
+            raise CompilerNotInstalled(
                 "Solc is not installed. Call solcx.get_installable_solc_versions()"
                 " to view for available versions and solcx.install_solc() to install."
             )
         return _default_solc_binary
 
-    version = _convert_and_validate_version(version)
-    solc_bin = get_solcx_install_folder(solcx_binary_path).joinpath(f"solc-v{version}")
+    version = _convert_and_validate_solc_version(version)
+    solc_bin = get_solc_install_folder(solcx_binary_path).joinpath(f"solc-v{version}")
     if _get_os_name() == "windows":
         solc_bin = solc_bin.joinpath("solc.exe")
     if not solc_bin.exists():
-        raise SolcNotInstalled(
+        raise CompilerNotInstalled(
             f"solc {version} has not been installed."
             f" Use solcx.install_solc('{version}') to install."
         )
@@ -214,7 +215,7 @@ def set_solc_version(
     solcx_binary_path : Path | str, optional
         User-defined path, used to override the default installation directory.
     """
-    version = _convert_and_validate_version(version)
+    version = _convert_and_validate_solc_version(version)
     global _default_solc_binary
     _default_solc_binary = get_executable(version, solcx_binary_path)
     if not silent:
@@ -261,7 +262,7 @@ def set_solc_version_pragma(
     """
     version = _select_pragma_version(pragma_string, get_installed_solc_versions())
     if version is None:
-        raise SolcNotInstalled(
+        raise CompilerNotInstalled(
             f"No compatible solc version installed."
             f" Use solcx.install_solc_version_pragma('{version}') to install."
         )
@@ -396,7 +397,7 @@ def get_installed_solc_versions(solcx_binary_path: Union[Path, str] = None) -> L
     List
         List of Version objects of installed `solc` versions.
     """
-    install_path = get_solcx_install_folder(solcx_binary_path)
+    install_path = get_solc_install_folder(solcx_binary_path)
     return sorted([Version(i.name[6:]) for i in install_path.glob("solc-v*")], reverse=True)
 
 
@@ -427,14 +428,14 @@ def install_solc(
     if version == "latest":
         version = get_installable_solc_versions()[0]
     else:
-        version = _convert_and_validate_version(version)
+        version = _convert_and_validate_solc_version(version)
 
     os_name = _get_os_name()
     process_lock = get_process_lock(str(version))
 
     with process_lock:
         if _check_for_installed_version(version, solcx_binary_path):
-            path = get_solcx_install_folder(solcx_binary_path).joinpath(f"solc-v{version}")
+            path = get_solc_install_folder(solcx_binary_path).joinpath(f"solc-v{version}")
             LOGGER.info(f"solc {version} already installed at: {path}")
             return version
 
@@ -446,7 +447,7 @@ def install_solc(
         try:
             filename = data.json()["releases"][str(version)]
         except KeyError:
-            raise SolcInstallationError(f"Solc binary for v{version} is not available for this OS")
+            raise CompilerInstallationError(f"Solc binary for v{version} is not available for this OS")
 
         if os_name == "linux":
             _install_solc_unix(version, filename, show_progress, solcx_binary_path)
@@ -457,7 +458,7 @@ def install_solc(
 
         try:
             _validate_installation(version, solcx_binary_path)
-        except SolcInstallationError as exc:
+        except CompilerInstallationError as exc:
             if os_name != "windows":
                 exc.args = (
                     f"{exc.args[0]} If this issue persists, you can try to compile from "
@@ -495,19 +496,19 @@ def compile_solc(
     if version == "latest":
         version = get_compilable_solc_versions()[0]
     else:
-        version = _convert_and_validate_version(version)
+        version = _convert_and_validate_solc_version(version)
 
     process_lock = get_process_lock(str(version))
 
     with process_lock:
         if _check_for_installed_version(version, solcx_binary_path):
-            path = get_solcx_install_folder(solcx_binary_path).joinpath(f"solc-v{version}")
+            path = get_solc_install_folder(solcx_binary_path).joinpath(f"solc-v{version}")
             LOGGER.info(f"solc {version} already installed at: {path}")
             return version
 
         temp_path = _get_temp_folder()
         download = SOURCE_DOWNLOAD_BASE.format(version, f"solidity_{version}.tar.gz")
-        install_path = get_solcx_install_folder(solcx_binary_path).joinpath(f"solc-v{version}")
+        install_path = get_solc_install_folder(solcx_binary_path).joinpath(f"solc-v{version}")
 
         content = _download_solc(download, show_progress)
         with tarfile.open(fileobj=BytesIO(content)) as tar:
@@ -541,7 +542,7 @@ def compile_solc(
                     f"{err_msg}\n\nFor suggested installation options: "
                     "https://github.com/iamdefinitelyahuman/py-solc-x/wiki/Installing-Solidity-on-OSX"  # noqa: E501
                 )
-            raise SolcInstallationError(err_msg)
+            raise CompilerInstallationError(err_msg)
 
         finally:
             os.chdir(original_path)
@@ -555,7 +556,7 @@ def compile_solc(
 def _check_for_installed_version(
     version: Version, solcx_binary_path: Union[Path, str] = None
 ) -> bool:
-    path = get_solcx_install_folder(solcx_binary_path).joinpath(f"solc-v{version}")
+    path = get_solc_install_folder(solcx_binary_path).joinpath(f"solc-v{version}")
     return path.exists()
 
 
@@ -598,7 +599,7 @@ def _install_solc_unix(
     version: Version, filename: str, show_progress: bool, solcx_binary_path: Union[Path, str, None]
 ) -> None:
     download = BINARY_DOWNLOAD_BASE.format(_get_os_name(), filename)
-    install_path = get_solcx_install_folder(solcx_binary_path).joinpath(f"solc-v{version}")
+    install_path = get_solc_install_folder(solcx_binary_path).joinpath(f"solc-v{version}")
 
     content = _download_solc(download, show_progress)
     with open(install_path, "wb") as fp:
@@ -611,7 +612,7 @@ def _install_solc_windows(
     version: Version, filename: str, show_progress: bool, solcx_binary_path: Union[Path, str, None]
 ) -> None:
     download = BINARY_DOWNLOAD_BASE.format(_get_os_name(), filename)
-    install_path = get_solcx_install_folder(solcx_binary_path).joinpath(f"solc-v{version}")
+    install_path = get_solc_install_folder(solcx_binary_path).joinpath(f"solc-v{version}")
 
     temp_path = _get_temp_folder()
     content = _download_solc(download, show_progress)
@@ -633,7 +634,7 @@ def _validate_installation(version: Version, solcx_binary_path: Union[Path, str,
         installed_version = wrapper._get_solc_version(binary_path)
     except Exception:
         _unlink_solc(binary_path)
-        raise SolcInstallationError(
+        raise CompilerInstallationError(
             "Downloaded binary would not execute, or returned unexpected output."
         )
     if installed_version.truncate() != version.truncate():

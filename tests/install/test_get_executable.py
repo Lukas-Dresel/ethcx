@@ -3,24 +3,24 @@
 
 import pytest
 
-import solcx
-from solcx.exceptions import SolcNotInstalled, UnsupportedVersionError
+import ethcx
+from ethcx.exceptions import CompilerNotInstalled, UnsupportedVersionError
 
 
 def test_get_executable():
-    assert solcx.install.get_executable() == solcx.install._default_solc_binary
+    assert ethcx.install.get_executable() == ethcx.install._default_solc_binary
 
 
 def test_no_default_set(nosolc):
-    with pytest.raises(SolcNotInstalled):
-        solcx.install.get_executable()
+    with pytest.raises(CompilerNotInstalled):
+        ethcx.install.get_executable()
 
 
 def test_unsupported_version():
     with pytest.raises(UnsupportedVersionError):
-        solcx.install.get_executable("0.4.0")
+        ethcx.install.get_executable("0.4.0")
 
 
 def test_version_not_installed():
-    with pytest.raises(SolcNotInstalled):
-        solcx.install.get_executable("999.999.999")
+    with pytest.raises(CompilerNotInstalled):
+        ethcx.install.get_executable("999.999.999")

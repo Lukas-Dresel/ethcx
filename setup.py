@@ -2,22 +2,24 @@
 
 from setuptools import find_packages, setup
 
+with open("README.md") as readme_file:
+    readme = readme_file.read()
 setup(
-    name="py-solc-x",
+    name="ethcx",
     version="1.1.1",  # don't change this manually, use bumpversion instead
-    description="Python wrapper and version management tool for the solc Solidity compiler.",
-    long_description_markdown_filename="README.md",
-    author="Ben Hauser (forked from py-solc by Piper Merriam)",
-    author_email="ben@hauser.id",
-    url="https://github.com/iamdefinitelyahuman/py-solc-x",
+    description="Python wrapper and version management tool for ethereum-targeting compilers.",
+    long_description=readme,
+    author="Lukas Dresel (forked from py-solc-x by Ben Hause)",
+    author_email="Lukas-Dresel@users.noreply.github.com",
+    url="https://github.com/ethpwn/ethcx",
     include_package_data=True,
-    py_modules=["solcx"],
+    py_modules=["ethcx"],
     setup_requires=["setuptools-markdown"],
     python_requires=">=3.6, <4",
     install_requires=["requests>=2.19.0,<3", "semantic_version>=2.8.1,<3"],
     license="MIT",
     zip_safe=False,
-    keywords="ethereum solidity solc",
+    keywords="ethereum solidity solc vyper",
     packages=find_packages(exclude=["tests", "tests.*"]),
     classifiers=[
         "Intended Audience :: Developers",
