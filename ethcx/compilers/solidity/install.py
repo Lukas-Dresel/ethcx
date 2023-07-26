@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 import requests
+from ethcx.utils import extract_version_from_spec_string
 from semantic_version import SimpleSpec, Version
 
 from . import wrapper
@@ -222,20 +223,6 @@ def set_solc_version(
         LOGGER.info(f"Using solc version {version}")
 
 
-def _select_pragma_version(pragma_string: str, version_list: List[Version]) -> Optional[Version]:
-    comparator_set_range = pragma_string.replace(" ", "").split("||")
-    comparator_regex = re.compile(r"(([<>]?=?|\^)\d+\.\d+\.\d+)+")
-    version = None
-
-    for comparator_set in comparator_set_range:
-        spec = SimpleSpec(*(i[0] for i in comparator_regex.findall(comparator_set)))
-        selected = spec.select(version_list)
-        if selected and (not version or version < selected):
-            version = selected
-
-    return version
-
-
 def set_solc_version_pragma(
     pragma_string: str, silent: bool = False, check_new: bool = False
 ) -> Version:
@@ -260,7 +247,7 @@ def set_solc_version_pragma(
     Version
         The new active `solc` version.
     """
-    version = _select_pragma_version(pragma_string, get_installed_solc_versions())
+    version = extract_version_from_spec_string(pragma_string, get_installed_solc_versions())
     if version is None:
         raise CompilerNotInstalled(
             f"No compatible solc version installed."
@@ -302,7 +289,7 @@ def install_solc_pragma(
     Version
         Installed `solc` version.
     """
-    version = _select_pragma_version(pragma_string, get_installable_solc_versions())
+    version = extract_version_from_spec_string(pragma_string, get_installable_solc_versions())
     if not version:
         raise UnsupportedVersionError("Compatible solc version does not exist")
     if install:

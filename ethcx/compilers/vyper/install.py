@@ -26,7 +26,7 @@ from semantic_version import SimpleSpec, Version
 from . import wrapper
 from ...           import ETHCX_BINARY_PATH_VARIABLE
 from ...lock       import get_process_lock
-from ...utils      import download_file_contents_from_url, file_type
+from ...utils      import download_file_contents_from_url, extract_version_from_spec_string, file_type
 from ...exceptions import (
     DownloadError,
     CompilerInstallationError,
@@ -66,6 +66,81 @@ def _convert_and_validate_vyper_version(version: Union[str, Version]) -> Version
         version = Version(version.lstrip("v"))
     # if version not in SimpleSpec(">=0.4.11"):
     #     raise UnsupportedVersionError("py-vyper-x does not support vyper versions <0.4.11")
+    return version
+
+
+def set_vyper_version_pragma(
+    pragma_string: str, silent: bool = False, check_new: bool = False
+) -> Version:
+    """
+    Set the currently active `solc` binary based on a pragma statement.
+
+    The newest installed version that matches the pragma is chosen. Raises
+    `SolcNotInstalled` if no installed versions match.
+
+    Arguments
+    ---------
+    pragma_string : str
+        Pragma statement, e.g. "pragma solidity ^0.4.22;"
+    silent : bool, optional
+        If True, do not generate any logger output.
+    check_new : bool, optional
+        If True, also check if there is a newer compatible version that has not
+        been installed.
+
+    Returns
+    -------
+    Version
+        The new active `solc` version.
+    """
+    version = extract_version_from_spec_string(pragma_string, get_installed_vyper_versions())
+    if version is None:
+        raise CompilerNotInstalled(
+            f"No compatible solc version installed."
+            f" Use solcx.install_solc_version_pragma('{version}') to install."
+        )
+    set_vyper_version(version, silent)
+    if check_new:
+        latest = install_vyper_pragma(pragma_string, False)
+        if latest > version:
+            LOGGER.info(f"Newer compatible solc version exists: {latest}")
+
+    return version
+
+
+def install_vyper_pragma(
+    pragma_string: str,
+    install: bool = True,
+    show_progress: bool = False,
+    vyper_binary_path: Union[Path, str] = None,
+) -> Version:
+    """
+    Find, and optionally install, the latest compatible `solc` version based on
+    a pragma statement.
+
+    Arguments
+    ---------
+    pragma_string : str
+        Pragma statement, e.g. "pragma solidity ^0.4.22;"
+    install : bool, optional
+        If True, installs the version of `solc`.
+    show_progress : bool, optional
+        If True, display a progress bar while downloading. Requires installing
+        the `tqdm` package.
+    solcx_binary_path : Path | str, optional
+        User-defined path, used to override the default installation directory.
+
+    Returns
+    -------
+    Version
+        Installed `solc` version.
+    """
+    version = extract_version_from_spec_string(pragma_string, get_installable_vyper_versions())
+    if not version:
+        raise UnsupportedVersionError("Compatible solc version does not exist")
+    if install:
+        install_vyper(version, show_progress=show_progress, solcx_binary_path=vyper_binary_path)
+
     return version
 
 

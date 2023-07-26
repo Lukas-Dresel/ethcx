@@ -21,7 +21,9 @@ from .compilers.vyper.install import (
     get_vyper_install_folder,
     import_installed_vyper,
     install_vyper,
+    install_vyper_pragma,
     set_vyper_version,
+    set_vyper_version_pragma,
 )
 from .compilers.solidity.main import compile_solidity_files, compile_solidity_source, compile_solidity_standard, get_solc_version, link_solidity_code
 from .compilers.vyper.main import compile_vyper_files, compile_vyper_source, compile_vyper_standard, get_vyper_version

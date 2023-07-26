@@ -2,9 +2,11 @@ import logging
 import os
 import re
 import subprocess
+from typing import List, Optional
 import virtualenv
 import pip
 import requests
+from semantic_version import SimpleSpec, Version
 
 try:
     from tqdm import tqdm
@@ -13,6 +15,19 @@ except ImportError:
 
 from .exceptions import DownloadError
 
+
+def extract_version_from_spec_string(pragma_string: str, version_list: List[Version]) -> Optional[Version]:
+    comparator_set_range = pragma_string.replace(" ", "").split("||")
+    comparator_regex = re.compile(r"(([<>]?=?|\^)\d+\.\d+\.\d+)+")
+    version = None
+
+    for comparator_set in comparator_set_range:
+        spec = SimpleSpec(*(i[0] for i in comparator_regex.findall(comparator_set)))
+        selected = spec.select(version_list)
+        if selected and (not version or version < selected):
+            version = selected
+
+    return version
 
 def create_virtualenv(path, python=None):
     args = []
