@@ -160,7 +160,6 @@ def import_installed_solc(solcx_binary_path: Union[Path, str] = None) -> List[Ve
 
     return imported_versions
 
-
 def get_executable(
     version: Union[str, Version] = None, solcx_binary_path: Union[Path, str] = None
 ) -> Path:

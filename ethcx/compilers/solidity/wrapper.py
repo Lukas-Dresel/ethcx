@@ -27,6 +27,13 @@ def _get_solc_version(solc_binary: Union[Path, str], with_commit_hash: bool = Fa
     else:
         return version.truncate()
 
+BINARY_VERSION_CACHE = {}
+def get_solc_version(solc_binary: Union[Path, str], with_commit_hash: bool = False) -> Version:
+    global BINARY_VERSION_CACHE
+    if solc_binary not in BINARY_VERSION_CACHE:
+        BINARY_VERSION_CACHE[solc_binary] = _get_solc_version(solc_binary, with_commit_hash=with_commit_hash)
+    return BINARY_VERSION_CACHE[solc_binary]
+
 
 def _to_string(key: str, value: Any) -> str:
     # convert data into a string prior to calling `solc`

@@ -381,6 +381,8 @@ def compile_solidity_standard(
     )
 
     compiler_output = json.loads(stdoutdata)
+    assert 'compiler' not in compiler_output
+    compiler_output['compiler'] = 'solc-' + str(wrapper.get_solc_version(solc_binary, with_commit_hash=False))
     if "errors" in compiler_output:
         has_errors = any(error["severity"] == "error" for error in compiler_output["errors"])
         if has_errors:
