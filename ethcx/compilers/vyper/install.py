@@ -127,7 +127,7 @@ def install_vyper_pragma(
     show_progress : bool, optional
         If True, display a progress bar while downloading. Requires installing
         the `tqdm` package.
-    solcx_binary_path : Path | str, optional
+    vyper_binary_path : Path | str, optional
         User-defined path, used to override the default installation directory.
 
     Returns
@@ -139,7 +139,7 @@ def install_vyper_pragma(
     if not version:
         raise UnsupportedVersionError("Compatible solc version does not exist")
     if install:
-        install_vyper(version, show_progress=show_progress, solcx_binary_path=vyper_binary_path)
+        install_vyper(version, show_progress=show_progress, vyper_binary_path=vyper_binary_path)
 
     return version
 
@@ -423,7 +423,7 @@ def get_installed_vyper_versions(vyper_binary_path: Union[Path, str] = None) -> 
         List of Version objects of installed `vyper` versions.
     """
     install_path = get_vyper_install_folder(vyper_binary_path)
-    return sorted([Version(i.name[6:]) for i in install_path.glob("vyper-v*")], reverse=True)
+    return sorted([Version(i.name[7:]) for i in install_path.glob("vyper-v*")], reverse=True)
 
 
 def install_vyper(

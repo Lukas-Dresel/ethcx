@@ -29,9 +29,9 @@ class CompilationError(Exception):
             f"\n> command: `{' '.join(str(i) for i in self.command)}`"
             f"\n> return code: `{self.return_code}`"
             "\n> stdout:"
-            f"\n{self.stdout_data}"
+            f"\n{self.stdout_data[:10000]}"
             "\n> stderr:"
-            f"\n{self.stderr_data}"
+            f"\n{self.stderr_data[:10000]}"
         ).strip()
 
 

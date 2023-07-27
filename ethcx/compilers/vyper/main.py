@@ -371,7 +371,8 @@ def compile_vyper_standard(
     if "errors" in compiler_output:
         has_errors = any(error["severity"] == "error" for error in compiler_output["errors"])
         for error in compiler_output["errors"]:
-            wrapper.install.LOGGER.warn(f"{error['severity'].upper()} @ {error['sourceLocation']}: {error['message']}")
+            error['formattedMessage'] = f"{error['severity'].upper()}: {error['sourceLocation']}: {error['message']}"
+            wrapper.install.LOGGER.warn(error['formattedMessage'])
         if has_errors:
             error_message = "\n".join(
                 tuple(
