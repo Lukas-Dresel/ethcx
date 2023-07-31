@@ -6,7 +6,7 @@ with open("README.md") as readme_file:
     readme = readme_file.read()
 setup(
     name="ethcx",
-    version="0.0.1",  # don't change this manually, use bumpversion instead
+    version="0.0.2",  # don't change this manually, use bumpversion instead
     description="Python wrapper and version management tool for ethereum-targeting compilers.",
     long_description=readme,
     author="Lukas Dresel (forked from py-solc-x by Ben Hause)",
