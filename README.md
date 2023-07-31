@@ -1,45 +1,49 @@
-# py-solc-x
+# ethcx
 
-[![Pypi Status](https://img.shields.io/pypi/v/py-solc-x.svg)](https://pypi.org/project/py-solc-x/) [![Build Status](https://img.shields.io/github/workflow/status/iamdefinitelyahuman/py-solc-x/py-solc-x%20workflow)](https://github.com/iamdefinitelyahuman/py-solc-x/actions) [![Coverage Status](https://img.shields.io/codecov/c/github/iamdefinitelyahuman/py-solc-x)](https://codecov.io/gh/iamdefinitelyahuman/py-solc-x)
+[![Pypi Status](https://img.shields.io/pypi/v/ethcx.svg)](https://pypi.org/project/ethcx/) [![Build Status](https://img.shields.io/github/workflow/status/ethpwn/ethcx/ethcx%20workflow)](https://github.com/ethpwn/ethcx/actions) [![Coverage Status](https://img.shields.io/codecov/c/github/ethpwn/ethcx)](https://codecov.io/gh/ethpwn/ethcx)
 
-Python wrapper and version management tool for the `solc` Solidity compiler.
+Python wrapper and version management tool for compilers target the ethereum platform.
 
-Forked from [`py-solc`](https://github.com/ethereum/py-solc).
+Currently supports the `solc` Solidity compiler and the `vyper` compiler.
+
+Forked from [`py-solc-x`](https://github.com/iamdefinitelyahuman/py-solc-x).
 
 ## Features
 
-* Full support for Solidity `>=0.4.11`
-* Install Solidity on Linux, OSX and Windows
+* Full support for Solidity `>=0.4.11` and Vyper
+* Install Solidity and Vyper on Linux, OSX and Windows
 * Compile Solidity from source on Linux and OSX
 
 ## Dependencies
 
-Py-solc-x allows the use of multiple versions of solc, and can install or compile them as needed. If you wish to compile from source you must first insall the required [solc dependencies](https://solidity.readthedocs.io/en/latest/installing-solidity.html#building-from-source).
+`ethcx` allows the use of multiple versions of solc, and can install or compile them as needed. If you wish to compile from source you must first insall the required [solc dependencies](https://solidity.readthedocs.io/en/latest/installing-solidity.html#building-from-source).
+
+For Vyper, `ethcx` can download and install all released versions of the `vyper` compiler binaries from [Github Release](https://github.com/vyperlang/vyper/releases).
 
 
 ## Installation
 
-### via `pip`
+### From `pypi`
 
 ```bash
-pip install py-solc-x
+pip install ethcx
 ```
 
-### via `setuptools`
+### Local (editable) install
 
 ```bash
-git clone https://github.com/iamdefinitelyahuman/py-solc-x.git
-cd py-solc-x
-python3 setup.py install
+git clone https://github.com/ethpwn/ethcx.git
+cd ethcx
+pip install -e .
 ```
 
 ## Documentation
 
-Documentation is hosted at [Read the Docs](https://solcx.readthedocs.io/en/latest/).
+Documentation is hosted at [Read the Docs](https://ethcx.readthedocs.io/en/latest/).
 
 ## Testing
 
-Py-solc-x is tested on Linux, OSX and Windows with solc versions ``>=0.4.11``.
+ethcx is tested on Linux, OSX and Windows with solc versions ``>=0.4.11``.
 
 To run the test suite:
 
@@ -53,7 +57,7 @@ By default, the test suite installs all available `solc` versions for your OS. I
 
 Help is always appreciated! Feel free to open an issue if you find a problem, or a pull request if you've solved an issue.
 
-Please check out our [Contribution Guide](CONTRIBUTING.md) prior to opening a pull request, and join the Brownie [Gitter channel](https://gitter.im/eth-brownie/community) if you have any questions.
+Please check out our [Contribution Guide](CONTRIBUTING.md) prior to opening a pull request.
 
 ## License
 
