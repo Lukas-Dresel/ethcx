@@ -6,7 +6,7 @@ with open("README.md") as readme_file:
     readme = readme_file.read()
 setup(
     name="ethcx",
-    version="0.0.1-alpha.1",  # don't change this manually, use bumpversion instead
+    version="0.0.2-alpha.1",  # don't change this manually, use bumpversion instead
     description="Python wrapper and version management tool for ethereum-targeting compilers.",
     long_description=readme,
     author="Lukas Dresel (forked from py-solc-x by Ben Hause)",
@@ -16,7 +16,7 @@ setup(
     py_modules=["ethcx"],
     setup_requires=["setuptools-markdown"],
     python_requires=">=3.6, <4",
-    install_requires=["requests>=2.19.0,<3", "semantic_version>=2.8.1,<3"],
+    install_requires=["requests>=2.19.0,<3", "semantic_version>=2.8.1,<3", "virtualenv"],
     license="MIT",
     zip_safe=False,
     keywords="ethereum solidity solc vyper",
