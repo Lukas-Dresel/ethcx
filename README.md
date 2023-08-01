@@ -2,7 +2,7 @@
 
 [![Pypi Status](https://img.shields.io/pypi/v/ethcx.svg)](https://pypi.org/project/ethcx/) [![Build Status](https://img.shields.io/github/workflow/status/ethpwn/ethcx/ethcx%20workflow)](https://github.com/ethpwn/ethcx/actions) [![Coverage Status](https://img.shields.io/codecov/c/github/ethpwn/ethcx)](https://codecov.io/gh/ethpwn/ethcx)
 
-Python wrapper and version management tool for compilers target the ethereum platform.
+Python wrapper and version management tool for compilers targetting the ethereum platform.
 
 Currently supports the `solc` Solidity compiler and the `vyper` compiler.
 
@@ -18,7 +18,7 @@ Forked from [`py-solc-x`](https://github.com/iamdefinitelyahuman/py-solc-x).
 
 `ethcx` allows the use of multiple versions of solc, and can install or compile them as needed. If you wish to compile from source you must first insall the required [solc dependencies](https://solidity.readthedocs.io/en/latest/installing-solidity.html#building-from-source).
 
-For Vyper, `ethcx` can download and install all released versions of the `vyper` compiler binaries from [Github Release](https://github.com/vyperlang/vyper/releases).
+For Vyper, `ethcx` can download and install all released versions of the `vyper` compiler binaries from [Github Releases](https://github.com/vyperlang/vyper/releases).
 
 
 ## Installation
